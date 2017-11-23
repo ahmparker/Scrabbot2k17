@@ -11,26 +11,84 @@ public class Scrabbot {
 	private Map<String, Integer> wordValues;
 	private Map<Character, Integer> letterValues;
 	private ArrayList<Character> letterBag;
+	private ArrayList<Character> letterRack;
+	private char[] alphabet = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
+			'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+			'w', 'x', 'y', 'z' };
 
 	public Scrabbot() {
 		initializeGameDictionary();
 		initializeBag();
 		initializeletterValues();
 		fillWordValues();
-		for (String word: dictionary){
-			StdOut.println(word + ": " + wordValues.get(word));
+		String rack = generateRandomRack();
+		StdOut.println("Random rack: " + rack.toUpperCase());
+		if(letterRack.contains('_')){
+			for (int i = 0; i < alphabet.length; i++) {
+				String temp_rack = rack.replace('_', alphabet[i]);
+				StdOut.println(temp_rack);
+				permutation(temp_rack);
+			}
 		}
+		permutation(rack);
 	}
+
 	
-	private void fillWordValues(){
+	private void fillWordValues() {
 		wordValues = new HashMap<String, Integer>();
-		for (String word: dictionary){
+		for (String word : dictionary) {
 			int value = 0;
-			for (char letter: word.toCharArray()){
-				value+=getLetterValue(letter);
+			for (char letter : word.toCharArray()) {
+				value += getLetterValue(letter);
 			}
 			wordValues.put(word, value);
 		}
+	}
+
+	public void permutation(String s) {
+		permutation("", s);
+	}
+
+	private void permutation(String prefix, String s) {
+		int n = s.length();
+		if (n == 0 && dictionary.contains(prefix))
+			StdOut.println(prefix);
+		else {
+			for (int i = 0; i < n; i++)
+				permutation(prefix + s.charAt(i),
+						s.substring(0, i) + s.substring(i + 1, n));
+		}
+
+	}
+
+	private void printBagState() {
+		StdOut.println("Number of Tiles in the bag: " + letterBag.size());
+		StdOut.println("Letter count: ");
+		char temp = '_';
+		int charCount = 0;
+		Collections.sort(letterBag);
+		for (char c : letterBag) {
+			if (c == temp) {
+				charCount++;
+			} else {
+				String ptst = "\t" + temp + ": " + charCount;
+				StdOut.println(ptst.toUpperCase());
+				temp = c;
+				charCount = 1;
+			}
+		}
+	}
+
+	private String generateRandomRack() {
+		letterRack = new ArrayList<Character>();
+		String view = "";
+		for (int i = 0; i < 7; i++) {
+			int randomIndex = (int) (Math.random() * (letterBag.size() - i));
+			letterRack.add(letterBag.get(randomIndex));
+			view += letterBag.get(randomIndex);
+			letterBag.remove(randomIndex);
+		}
+		return view;
 	}
 
 	private void initializeletterValues() {
@@ -107,6 +165,8 @@ public class Scrabbot {
 				letterBag.add('i');
 			}
 			letterBag.add('e');
+			letterBag.add('_');
+
 		}
 	}
 

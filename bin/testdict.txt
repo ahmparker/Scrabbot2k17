@@ -1,0 +1,11 @@
+car
+cars
+cat
+do
+dog
+dogs
+done
+ear
+ears
+eat
+eats
