@@ -1,10 +1,9 @@
-
 public class DawgEdge {
 	private char edgeName;
 	private DawgNode from;
 	private DawgNode to;
 
-	public DawgEdge(char letter, DawgNode start, DawgNode end){
+	public DawgEdge(char letter, DawgNode start, DawgNode end) {
 		edgeName = letter;
 		from = start;
 		to = end;
@@ -31,11 +30,17 @@ public class DawgEdge {
 	}
 
 	public void setToId(DawgNode to) {
-		this.to = to;
+		if (to != from) {
+			this.to = to;
+		}
+		else{
+			StdOut.println(to + "SCREAMING" + from);
+		}
 	}
 
-	
-	
-	
-	
+	public String toString() {
+		return ("Edge " + edgeName + " from " + from.getNodeId() + " to " + to
+				.getNodeId());
+	}
+
 }

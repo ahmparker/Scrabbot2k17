@@ -2,22 +2,50 @@ import java.util.ArrayList;
 
 
 public class DawgNode {
-	public ArrayList<DawgEdge> edges;
+	public ArrayList<DawgEdge> edgesOutOf;
+	public ArrayList<DawgEdge> edgesInto;
 	private boolean terminal;
 	private int nodeId;
 	
 	public DawgNode(int id){
-		edges = new ArrayList<DawgEdge>();
+		edgesOutOf = new ArrayList<DawgEdge>();
+		edgesInto = new ArrayList<DawgEdge>();
 		terminal = false;
 		nodeId = id;
 	}
 	
+	public ArrayList<DawgEdge> getEdgesOutOf() {
+		return edgesOutOf;
+	}
+
+	public void setEdgesOutOf(ArrayList<DawgEdge> edgesOutOf) {
+		this.edgesOutOf = edgesOutOf;
+	}
+
+	public ArrayList<DawgEdge> getEdgesInto() {
+		return edgesInto;
+	}
+
+	public void setEdgesInto(ArrayList<DawgEdge> edgesInto) {
+		this.edgesInto = edgesInto;
+	}
+
 	public void addEdge(char edgeLetter, DawgNode nextNode){
-		edges.add(new DawgEdge(edgeLetter, this , nextNode));
+		edgesOutOf.add(new DawgEdge(edgeLetter, this , nextNode));
+		nextNode.edgesInto.add(new DawgEdge(edgeLetter, this , nextNode));
+	}
+	
+	public boolean connectsTo(DawgNode n){
+		for(DawgEdge e: edgesOutOf){
+			if(e.getTo().getNodeId()==n.getNodeId()){
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public boolean contains(char edgeLetter){
-		for(DawgEdge e: edges){
+		for(DawgEdge e: edgesOutOf){
 			if(e.getEdgeName()==edgeLetter){
 				return true;
 			}
@@ -26,7 +54,7 @@ public class DawgNode {
 	}
 	
 	public DawgEdge getEdge(char edgeLetter){
-		for(DawgEdge e: edges){
+		for(DawgEdge e: edgesOutOf){
 			if(e.getEdgeName()==edgeLetter){
 				return e;
 			}
@@ -35,7 +63,7 @@ public class DawgNode {
 	}
 	
 	public DawgNode getNextNodeFromEdge(char edgeLetter){
-		for(DawgEdge e: edges){
+		for(DawgEdge e: edgesOutOf){
 			if(e.getEdgeName()==edgeLetter){
 				return e.getTo();
 			}
@@ -44,7 +72,7 @@ public class DawgNode {
 	}
 	
 	public boolean isLeaf(){
-		if(edges.isEmpty()){
+		if(edgesOutOf.isEmpty()){
 			return true;
 		}
 		return false;
@@ -54,11 +82,11 @@ public class DawgNode {
 		return terminal;
 	}
 	public ArrayList<DawgEdge> getEdges() {
-		return edges;
+		return edgesOutOf;
 	}
 
 	public void setEdges(ArrayList<DawgEdge> edges) {
-		this.edges = edges;
+		this.edgesOutOf = edges;
 	}
 
 	public int getNodeId() {
@@ -71,6 +99,31 @@ public class DawgNode {
 
 	public void setTerminal(boolean terminal) {
 		this.terminal = terminal;
+	}
+	
+	public void printEdgesInto(){
+		String str = "";
+		for(DawgEdge e : edgesInto){
+			str+=e.toString() + "\t";
+		}
+		StdOut.println(str);
+	}
+	
+	public void printEdgesOutOf(){
+		String str = "";
+		for(DawgEdge e : edgesOutOf){
+			str+=e.toString() + "\t";
+		}
+		StdOut.println(str);
+	}
+	
+	public String toString(){
+		String str = "";
+		str += "Node ID: " + nodeId;
+		str += "\t Edges Into: "+ edgesInto + "\n";
+		str += "\t Edges Out Of: "+ edgesOutOf + "\n";
+		str += "\t Terminal: "+ terminal + "\n";
+		return str;
 	}
 
 }
