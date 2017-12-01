@@ -71,6 +71,15 @@ public class DawgNode {
 		return null;
 	}
 	
+	public DawgNode getPrevNodeFromEdge(char edgeLetter){
+		for(DawgEdge e: edgesInto){
+			if(e.getEdgeName()==edgeLetter){
+				return e.getFrom();
+			}
+		}
+		return null;
+	}
+	
 	public boolean isLeaf(){
 		if(edgesOutOf.isEmpty()){
 			return true;
