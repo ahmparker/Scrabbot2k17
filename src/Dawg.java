@@ -123,72 +123,30 @@ public class Dawg {
 	// }
 	// return 0;
 
-	private void connectAllNecessary(int n, DawgNode m) {
-		for (int l : distLoc.get(n)) {
-			if (l == m.getNodeId()) {
+	private void connectAllNecessary(int l, DawgNode m) {
+		for (int i : distLoc.get(l)) {
+			if (i == m.getNodeId()) {
 				continue;
 			}
-			print(nodes.get(l) + "\n" + m);
-
-			ArrayList<DawgEdge> tempIn = new ArrayList<DawgEdge>();
-			for (DawgEdge e : m.edgesInto) {
-				for (DawgEdge f : nodes.get(l).edgesInto) {
-					if (e.getEdgeName() == f.getEdgeName()|| (m.isTerminal() && nodes.get(l).isTerminal())) {
-						if (!tempIn.contains(f)) {
-							tempIn.add(f);
-						}
-						
-						ArrayList<DawgEdge> tempOut = new ArrayList<DawgEdge>();
-						for (DawgEdge g : m.edgesOutOf) {
-							for (DawgEdge h : nodes.get(l).edgesOutOf) {
-								if (((g.getEdgeName() == h.getEdgeName())
-										|| (g.getTo().isTerminal()
-										&& h.getTo().isTerminal())) && !tempOut
-										.contains(h)) {
-									print(h);
-									tempOut.add(h);
-								}
-							}
-						}
-						for (DawgEdge t : tempOut) {
-							print("OUT:"+tempOut);
-							DawgEdge newEdge = new DawgEdge(t.getEdgeName(), m,
-									m.getNextNodeFromEdge(t.getEdgeName()));
-							print("Out: Removing " + t.getEdgeName() + " from "
-									+ nodes.get(l).getNodeId()
-									+ " and adding it to " + m.getNodeId());
-							if (!m.edgesOutOf.contains(newEdge)) {
-								m.edgesOutOf.add(newEdge);
-								print(l+" Before "+nodes.get(l).edgesOutOf);
-								nodes.get(l).getNextNodeFromEdge(t.getEdgeName()).edgesInto.remove(t);
-								nodes.get(l).edgesOutOf.remove(t);
-								print(l+" After " + nodes.get(l).edgesOutOf);
-								
-
-							}
+			DawgNode n = nodes.get(i);
+			if (n.isTerminal() && m.isTerminal()) {
+				print(m.getNodeId() + "\t" + n.getNodeId());
+				for (DawgEdge e : n.edgesInto) {
+					if (!m.edgeLetters.contains(e.getEdgeName())) {
+						n.getPrevNodeFromEdge(e.getEdgeName()).addEdge(e.getEdgeName(), m);
+						n.getPrevNodeFromEdge(e.getEdgeName()).removeEdge(e.getEdgeName(),n);
+						print(n.getPrevNodeFromEdge(e.getEdgeName()));
+					}
+					else{
+						for(DawgEdge f: n.getPrevNodeFromEdge(e.getEdgeName()).edgesInto){
+							n.getPrevNodeFromEdge(e.getEdgeName()).getPrevNodeFromEdge(f.getEdgeName()).addEdge(f.getEdgeName(), m);
+							n.getPrevNodeFromEdge(e.getEdgeName()).getPrevNodeFromEdge(f.getEdgeName()).removeEdge(f.getEdgeName(), n.getPrevNodeFromEdge(e.getEdgeName()));
+							print(n.getPrevNodeFromEdge(e.getEdgeName()).getPrevNodeFromEdge(f.getEdgeName()));
 						}
 					}
 				}
+				n.edgesInto.clear();
 			}
-			for (DawgEdge t : tempIn) {
-				print("IN: "+tempIn);
-				print("In: Removing " + t.getEdgeName() + " from "
-						+ nodes.get(l).getNodeId() + " and adding it to "
-						+ m.getNodeId());
-				for(DawgEdge e: nodes.get(l).getPrevNodeFromEdge(t.getEdgeName()).edgesInto){
-					print("Here");
-					DawgEdge newEdge = new DawgEdge(e.getEdgeName(),e.getFrom(),m.getPrevNodeFromEdge(t.getEdgeName()));
-					print(m.getPrevNodeFromEdge(t.getEdgeName()).getNodeId()+" Before "+m.getPrevNodeFromEdge(t.getEdgeName()).edgesInto);
-					m.getPrevNodeFromEdge(t.getEdgeName()).edgesInto.add(newEdge);
-					print(m.getPrevNodeFromEdge(t.getEdgeName()).getNodeId()+" After "+m.getPrevNodeFromEdge(t.getEdgeName()).edgesInto);
-					print(l+" Before "+nodes.get(l).edgesInto);
-					nodes.get(l).getPrevNodeFromEdge(t.getEdgeName()).edgesOutOf.remove(t);
-					nodes.get(l).edgesInto.remove(t);
-					print(l+" After "+nodes.get(l).edgesInto);
-				}
-				
-			}
-			print(nodes.get(l) + "\n" + m);
 		}
 	}
 
@@ -200,6 +158,7 @@ public class Dawg {
 			}
 			if (distanceToRoot[m.getNodeId()] == n) {
 				connectAllNecessary(n, m);
+				connectAllNecessary(n,m);
 			}
 		}
 
@@ -292,6 +251,7 @@ public class Dawg {
 		for (DawgNode n : nodes) {
 			StdOut.println(n.getNodeId());
 			n.printEdgesOutOf();
+			n.printEdgesInto();
 			if (n.isTerminal()) {
 				print("Terminal");
 			}
