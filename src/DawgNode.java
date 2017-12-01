@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 
 public class DawgNode {
+	public ArrayList<DawgNode> nodesOutOf;
+	public ArrayList<DawgNode> nodesInto;
 	public ArrayList<DawgEdge> edgesOutOf;
 	public ArrayList<DawgEdge> edgesInto;
 	public ArrayList<Character> edgeLetters;
@@ -19,6 +21,8 @@ public class DawgNode {
 	public DawgNode(int id) {
 		edgesOutOf = new ArrayList<DawgEdge>();
 		edgesInto = new ArrayList<DawgEdge>();
+		nodesInto = new ArrayList<DawgNode>();
+		nodesOutOf = new ArrayList<DawgNode>();
 		edgeLetters = new ArrayList<Character>();
 		terminal = false;
 		nodeId = id;
@@ -41,8 +45,9 @@ public class DawgNode {
 	}
 
 	public void addEdge(char edgeLetter, DawgNode nextNode) {
-		if (!edgesOutOf.contains(new DawgEdge(edgeLetter, this, nextNode))) {
+		if (!nodesOutOf.contains(nextNode) && !edgeLetters.contains(edgeLetter)) {
 			edgesOutOf.add(new DawgEdge(edgeLetter, this, nextNode));
+			nodesOutOf.add(nextNode);
 			nextNode.edgesInto.add(new DawgEdge(edgeLetter, this, nextNode));
 			edgeLetters.add(edgeLetter);
 		}
@@ -59,6 +64,7 @@ public class DawgNode {
 		for (DawgEdge e : temp) {
 			edgesOutOf.remove(e);
 		}
+		nodesOutOf.remove(nextNode);
 	}
 
 	public boolean connectsTo(DawgNode n) {

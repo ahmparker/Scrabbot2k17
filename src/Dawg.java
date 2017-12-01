@@ -140,7 +140,7 @@ public class Dawg {
 					else{
 						for(DawgEdge f: n.getPrevNodeFromEdge(e.getEdgeName()).edgesInto){
 							n.getPrevNodeFromEdge(e.getEdgeName()).getPrevNodeFromEdge(f.getEdgeName()).addEdge(f.getEdgeName(), m);
-							n.getPrevNodeFromEdge(e.getEdgeName()).getPrevNodeFromEdge(f.getEdgeName()).removeEdge(f.getEdgeName(), n.getPrevNodeFromEdge(e.getEdgeName()));
+							n.getPrevNodeFromEdge(e.getEdgeName()).removeEdge(e.getEdgeName(), n);
 							print(n.getPrevNodeFromEdge(e.getEdgeName()).getPrevNodeFromEdge(f.getEdgeName()));
 						}
 					}
