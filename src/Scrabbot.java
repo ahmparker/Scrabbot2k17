@@ -189,6 +189,10 @@ public class Scrabbot {
 	public int getLetterValue(char letter) { //returns the points of a letter from our letterValues map
 		return letterValues.get(letter);
 	}
+	
+	public int getWordValue(String word) { //returns the points of a letter from our letterValues map
+		return wordValues.get(word);
+	}
 
 	public static void main(String[] args) {
 		Scrabbot s = new Scrabbot();
