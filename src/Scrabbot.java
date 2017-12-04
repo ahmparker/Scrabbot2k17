@@ -22,16 +22,16 @@ public class Scrabbot {
 		initializeBag();
 		initializeletterValues();
 		fillWordValues();
-		//String rack = generateRandomRack();
-		//StdOut.println("Random rack: " + rack.toUpperCase());
-		/*if(letterRack.contains('_')){
+		String rack = generateRandomRack();
+		StdOut.println("Random rack: " + rack.toUpperCase());
+		if(letterRack.contains('_')){
 			for (int i = 0; i < alphabet.length; i++) {
 				String temp_rack = rack.replace('_', alphabet[i]);
 				StdOut.println(temp_rack);
 				permutation(temp_rack);
 			}
 		}
-		*/ //permutation(rack);
+		permutation(rack);
 	}
 
 	
