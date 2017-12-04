@@ -18,20 +18,23 @@ public class Scrabbot {
 			'w', 'x', 'y', 'z' };
 
 	public Scrabbot() {
+
 		initializeGameDictionary();
 		initializeBag();
 		initializeletterValues();
 		fillWordValues();
 		String rack = generateRandomRack();
 		StdOut.println("Random rack: " + rack.toUpperCase());
-		if(letterRack.contains('_')){
-			for (int i = 0; i < alphabet.length; i++) {
-				String temp_rack = rack.replace('_', alphabet[i]);
+		for (int i = rack.length(); i >= 2; i--){
+			if(letterRack.contains('_')){ 							//to do: write code that will check the permutations of temp_rack for words less than 7 letters long
+			for (int j = 0; j < alphabet.length; j++) { 		//loop only occurs if rack has a blank space. loops through alphabet and checks for permutations with that letter replacing the blank
+				String temp_rack = rack.replace('_', alphabet[j]); 	//to do: add pointer that lets us know when we find a max point word for the rack given
 				StdOut.println(temp_rack);
-				permutation(temp_rack);
+				permutation(temp_rack,i);
+				}
 			}
+			permutation(rack, i);
 		}
-		permutation(rack);
 	}
 
 	
@@ -46,18 +49,19 @@ public class Scrabbot {
 		}
 	}
 
-	public void permutation(String s) {
-		permutation("", s);
+	public void permutation(String s, int length) {
+		permutation("", s, length);
 	}
 
-	private void permutation(String prefix, String s) {
+	private void permutation(String prefix, String s, int wLength) {
+		edu.princeton.cs.algs4.StdOut.println(prefix);
 		int n = s.length();
-		if (n == 0 && dictionary.contains(prefix))
+		if (n == 0 && dictionary.contains(prefix) && prefix.length() == wLength)
 			StdOut.println(prefix);
 		else {
-			for (int i = 0; i < n; i++)
+			for (int i = 0; i < n-1; i++)
 				permutation(prefix + s.charAt(i),
-						s.substring(0, i) + s.substring(i + 1, n));
+						s.substring(0, i) + s.substring(i + 1, n-1), wLength);
 		}
 
 	}
@@ -190,7 +194,7 @@ public class Scrabbot {
 		return letterValues.get(letter);
 	}
 	
-	public int getWordValue(String word) { //returns the points in a word from our worldValues map
+	public int getWordValue(String word){
 		return wordValues.get(word);
 	}
 
