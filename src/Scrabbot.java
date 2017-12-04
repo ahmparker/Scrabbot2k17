@@ -190,7 +190,7 @@ public class Scrabbot {
 		return letterValues.get(letter);
 	}
 	
-	public int getWordValue(String word) { //returns the points of a letter from our letterValues map
+	public int getWordValue(String word) { //returns the points in a word from our worldValues map
 		return wordValues.get(word);
 	}
 
