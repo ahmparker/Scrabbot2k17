@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -7,30 +8,33 @@ import java.util.Map;
 
 public class Scrabbot {
 
-	private ArrayList<String> dictionary;
-	private Map<String, Integer> wordValues;
-	private Map<Character, Integer> letterValues;
-	private ArrayList<Character> letterBag;
-	private ArrayList<Character> letterRack;
-	private char[] alphabet = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
+	public ArrayList<String> dictionary;
+	public Map<String, Integer> wordValues;
+	public Map<Character, Integer> letterValues;
+	public ArrayList<Character> letterBag;
+	public ArrayList<Character> letterRack;
+	public char[] alphabet = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
 			'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
 			'w', 'x', 'y', 'z' };
 
 	public Scrabbot() {
+
 		initializeGameDictionary();
 		initializeBag();
 		initializeletterValues();
 		fillWordValues();
 		String rack = generateRandomRack();
 		StdOut.println("Random rack: " + rack.toUpperCase());
-		if(letterRack.contains('_')){
-			for (int i = 0; i < alphabet.length; i++) {
-				String temp_rack = rack.replace('_', alphabet[i]);
+		for (int i = rack.length(); i >= 2; i--){
+			if(letterRack.contains('_')){ 							//to do: write code that will check the permutations of temp_rack for words less than 7 letters long
+			for (int j = 0; j < alphabet.length; j++) { 		//loop only occurs if rack has a blank space. loops through alphabet and checks for permutations with that letter replacing the blank
+				String temp_rack = rack.replace('_', alphabet[j]); 	//to do: add pointer that lets us know when we find a max point word for the rack given
 				StdOut.println(temp_rack);
-				permutation(temp_rack);
+				permutation(temp_rack,i);
+				}
 			}
+			permutation(rack, i);
 		}
-		permutation(rack);
 	}
 
 	
@@ -45,23 +49,24 @@ public class Scrabbot {
 		}
 	}
 
-	public void permutation(String s) {
-		permutation("", s);
+	public void permutation(String s, int length) {
+		permutation("", s, length);
 	}
 
-	private void permutation(String prefix, String s) {
+	private void permutation(String prefix, String s, int wLength) {
+		edu.princeton.cs.algs4.StdOut.println(prefix);
 		int n = s.length();
-		if (n == 0 && dictionary.contains(prefix))
+		if (n == 0 && dictionary.contains(prefix) && prefix.length() == wLength)
 			StdOut.println(prefix);
 		else {
-			for (int i = 0; i < n; i++)
+			for (int i = 0; i < n-1; i++)
 				permutation(prefix + s.charAt(i),
-						s.substring(0, i) + s.substring(i + 1, n));
+						s.substring(0, i) + s.substring(i + 1, n-1), wLength);
 		}
 
 	}
 
-	private void printBagState() {
+	private void printBagState() { //prints out the number of each letter left inside the bag
 		StdOut.println("Number of Tiles in the bag: " + letterBag.size());
 		StdOut.println("Letter count: ");
 		char temp = '_';
@@ -79,19 +84,19 @@ public class Scrabbot {
 		}
 	}
 
-	private String generateRandomRack() {
-		letterRack = new ArrayList<Character>();
+	private String generateRandomRack() { //creates a random rack of letters for our bot
+		letterRack = new ArrayList<Character>(); //create our list of chars as our "rack"
 		String view = "";
 		for (int i = 0; i < 7; i++) {
-			int randomIndex = (int) (Math.random() * (letterBag.size() - i));
-			letterRack.add(letterBag.get(randomIndex));
-			view += letterBag.get(randomIndex);
-			letterBag.remove(randomIndex);
+			int randomIndex = (int) (Math.random() * (letterBag.size() - i)); //pick a random number to use as our index
+			letterRack.add(letterBag.get(randomIndex)); //add the letter from letterBag w/ the corresponding index to letterRack
+			view += letterBag.get(randomIndex); //add the letter to our rack
+			letterBag.remove(randomIndex); //remove the chosen letter from the bag
 		}
-		return view;
+		return view; //return the string of chars that is our "rack"
 	}
 
-	private void initializeletterValues() {
+	private void initializeletterValues() { //create our hashmap connecting each letter to the amount of points it's worth
 		letterValues = new HashMap<Character, Integer>();
 		letterValues.clear();
 		letterValues.put('a', 1);
@@ -123,17 +128,17 @@ public class Scrabbot {
 		letterValues.put('_', 0);
 	}
 
-	public void initializeBag() {
+	public void initializeBag() { //add all the letters to the bag
 		letterBag = new ArrayList<Character>();
-		letterBag.clear();
-		letterBag.add('k');
+		letterBag.clear(); //clear everything
+		letterBag.add('k'); //these letters only get added once
 		letterBag.add('j');
 		letterBag.add('x');
 		letterBag.add('q');
 		letterBag.add('z');
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < 12; i++) {//these letters get put in 2 times
 			if (i < 2) {
-				letterBag.add('b');
+				letterBag.add('b'); 
 				letterBag.add('c');
 				letterBag.add('m');
 				letterBag.add('p');
@@ -142,50 +147,55 @@ public class Scrabbot {
 				letterBag.add('w');
 				letterBag.add('v');
 				letterBag.add('y');
+				letterBag.add('_');
 			}
-			if (i < 3) {
-				letterBag.add('g');
+			if (i < 3) { //3 g's
+				letterBag.add('g'); 
 			}
-			if (i < 4) {
+			if (i < 4) { // these letters get put in 4 times
 				letterBag.add('l');
 				letterBag.add('s');
 				letterBag.add('u');
 				letterBag.add('d');
 			}
-			if (i < 6) {
+			if (i < 6) { //these ones in 6
 				letterBag.add('n');
 				letterBag.add('r');
 				letterBag.add('t');
 			}
-			if (i < 8) {
+			if (i < 8) { //8 times
 				letterBag.add('o');
 			}
-			if (i < 9) {
+			if (i < 9) {//and these ones 9 times
 				letterBag.add('a');
 				letterBag.add('i');
 			}
-			letterBag.add('e');
-			letterBag.add('_');
+			letterBag.add('e'); //12 e's
+			
 
 		}
 	}
 
 	public void initializeGameDictionary() {
-		dictionary = new ArrayList<String>();
-		dictionary.clear();
-		try (BufferedReader br = new BufferedReader(new FileReader(
-				"/Users/Ben/Desktop/Workspace/Scrabbot2k17/src/twl06.txt"))) {
+		dictionary = new ArrayList<String>(); //new list of strings as our dictionary
+		dictionary.clear(); //clear it 
+		try (BufferedReader br = new BufferedReader(new FileReader( //create our buffered reader to read our giant txt file
+				"dict.txt"))) {
 			String line;
 			while ((line = br.readLine()) != null) {
-				dictionary.add(line.toLowerCase());
+				dictionary.add(line.toLowerCase()); //case doesn't matter in scrabble so we default to lowercase
 			}
 		} catch (Exception e) {
-			System.err.println("Poop");
+			System.err.println("Poop"); //error has occurred 
 		}
 	}
 
-	public int getLetterValue(char letter) {
+	public int getLetterValue(char letter) { //returns the points of a letter from our letterValues map
 		return letterValues.get(letter);
+	}
+	
+	public int getWordValue(String word){
+		return wordValues.get(word);
 	}
 
 	public static void main(String[] args) {
