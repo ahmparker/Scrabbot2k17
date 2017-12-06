@@ -41,7 +41,7 @@ public class Scrabbot {
 					String temp_rack = rack.replace('_', alphabet[j]);
 					blank = alphabet[j];
 					// StdOut.println(temp_rack);
-					hasDupes(rack);
+					duplicates = hasDupes(rack);
 					permutation(temp_rack, i);
 					if (big.indexOf(blank) > 0 && duplicates == false) { //lazy assumption; if the modified blank char is used and there are no duplicate letters on the rack, then we can confirm we used the modified blank tile and remove its points 
 						bigS = bigS - getLetterValue(blank);
@@ -49,7 +49,7 @@ public class Scrabbot {
 					
 				}
 			}
-			hasDupes(rack); //does the rack have duplicates?
+			duplicates = hasDupes(rack); //does the rack have duplicates?
 			permutation(rack, i);
 		}
 		StdOut.println(topScorer());
@@ -66,15 +66,16 @@ public class Scrabbot {
 		}
 	}
 
-	public void hasDupes(String rack){ //lets us know if a rack contains duplicate letters
+	public boolean hasDupes(String rack){ //lets us know if a rack contains duplicate letters
 		for (int i = 0; i < rack.length(); i++){
 			for (int j = i+1; j < rack.length(); j++){
 				if (rack.charAt(i) == rack.charAt(j)){
-					duplicates = true;
+					return true;
 				}
-				else duplicates = false;
+				return false;
 			}
 		}
+		return false;
 	}
 	
 	private String topScorer() {
