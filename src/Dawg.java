@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -18,8 +19,9 @@ public class Dawg {
 	public void initDict(String filename, int max_length) {
 		dictionary = new ArrayList<String>();
 		int i = 0;
+		File f = new File("src/"+filename);
 		try (BufferedReader br = new BufferedReader(new FileReader(
-				filename))) {
+				f))) {
 			String line;
 			while ((line = br.readLine()) != null) {
 				if (line.length() < 8) {
