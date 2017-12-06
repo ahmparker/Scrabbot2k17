@@ -254,7 +254,7 @@ public class Scrabbot {
 												// dictionary
 		dictionary.clear(); // clear it
 		try (BufferedReader br = new BufferedReader(new FileReader(
-				"/Users/Ben/Desktop/Workspace/Scrabbot2k17/src/dict.txt"))) { // create
+				"dict.txt"))) { // create
 																				// our
 																				// buffered
 																				// reader
