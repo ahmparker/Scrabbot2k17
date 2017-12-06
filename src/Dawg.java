@@ -9,15 +9,38 @@ public class Dawg {
 	private boolean[] search;
 	private ArrayList<DawgNode> leaves;
 	private int[] distanceToRoot;
+	ArrayList<String> dictionary;
 
 	public static void print(Object s) {
 		StdOut.println(s);
 	}
 
-	public Dawg() {
+	public void initDict(String filename, int max_length) {
+		dictionary = new ArrayList<String>();
+		int i = 0;
+		try (BufferedReader br = new BufferedReader(new FileReader(
+				filename))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				if (line.length() < 8) {
+					dictionary.add(line.toLowerCase());
+					i += 1;
+				}
+			}
+		} catch (Exception e) {
+			System.err.println("Poop");
+		}
+
+		for (String word : dictionary) {
+			addWord(word);
+		}
+	}
+
+	public Dawg(String filename, int maxLength) {
 		nodes = new ArrayList<DawgNode>();
 		root = new DawgNode(0);
 		nodes.add(root);
+		initDict(filename, maxLength);
 	}
 
 	public void addWord(String word) {
@@ -33,7 +56,9 @@ public class Dawg {
 		}
 		markLeaves(nodes, 0);
 		for (int i = 0; i < leaves.size(); i++) {
-			//StdOut.println(i +"/"+leaves.size()+"\t"+ ((int)1000*i/leaves.size())/10.0+ "% of the way through the leaves merge");
+			StdOut.println(i + "/" + leaves.size() + "\t"
+					+ ((int) 1000 * i / leaves.size()) / 10.0
+					+ "% of the way through the leaves merge");
 			for (int j = i + 1; j < leaves.size(); j++) {
 				try {
 					if (leaves.get(i).getEdgesInto().get(0).getEdgeName() == (leaves
@@ -45,9 +70,9 @@ public class Dawg {
 				}
 			}
 		}
-		print("HERE");
+		// print("HERE");
 		crunchLeaves();
-		
+
 		cleanup();
 	}
 
@@ -56,15 +81,16 @@ public class Dawg {
 			distanceToRoot[n.getNodeId()] = 0;
 			return 0;
 		}
-		if (!n.equals(root) && n.edgesInto.get(0).getFrom().equals(root)) {
+		if (!n.equals(root) && n.edgesInto.get(0).getFrom() == 0) {
 			distanceToRoot[n.getNodeId()] = 1;
 			return 1;
 		}
 		for (DawgEdge e : n.edgesInto) {
-			if (e.getFrom().equals(root) || distanceToRoot[n.getNodeId()] > 0) {
+			if (e.getFrom() == 0 || distanceToRoot[n.getNodeId()] > 0) {
 				return distanceToRoot[n.getNodeId()];
 			} else {
-				distanceToRoot[n.getNodeId()] = distanceToRoot(e.getFrom()) + 1;
+				distanceToRoot[n.getNodeId()] = distanceToRoot(nodes.get(e
+						.getFrom())) + 1;
 				return distanceToRoot[n.getNodeId()];
 			}
 		}
@@ -73,7 +99,7 @@ public class Dawg {
 
 	public void crunchLeaves() {
 		for (DawgNode n : nodes) {
-			//StdOut.println(((int)1000*nodes.indexOf(n)/nodes.size())/10.0);
+			// StdOut.println(((int)1000*nodes.indexOf(n)/nodes.size())/10.0);
 			for (DawgNode m : nodes) {
 				if (n.equals(m)) {
 					continue;
@@ -82,11 +108,12 @@ public class Dawg {
 						&& distanceToRoot[n.getNodeId()] > 0
 						&& m.isTerminal() && n.isTerminal()) {
 					for (DawgEdge e : m.edgesInto) {
-						DawgNode f = e.getFrom();
+						DawgNode f = nodes.get(e.getFrom());
 						f.edgesOutOf.remove(f.getEdge(e.getEdgeName()));
-						e.setToId(n);
-						e.getFrom().edgesOutOf.add(e);
+						e.setToId(n.getNodeId());
+						nodes.get(e.getFrom()).edgesOutOf.add(e);
 						n.edgesInto.add(e);
+						print(n.edgesInto.size());
 					}
 					m.edgesInto.clear();
 				}
@@ -112,27 +139,51 @@ public class Dawg {
 		}
 	}
 
+	public boolean containsWord(String word) {
+		return containsWord(root, word, false);
+	}
+
+	public boolean containsWord(DawgNode n, String word, boolean tf) {
+		print(n);
+		for (DawgEdge e : n.edgesOutOf) {
+			if (e.getEdgeName() == word.charAt(0)) {
+				if (word.length() > 1) {
+					tf = containsWord(nodes.get(e.getTo()), word.substring(1),
+							tf);
+				} else {
+					if (nodes.get(n.getNextNodeFromEdge(word.charAt(0))).isTerminal()) {
+						print("Yes " + word + " is contained within the Dawg");
+						tf = true;
+						return true;
+					}
+				}
+			}
+		}
+		return tf;
+	}
+
 	public void changePointers(DawgNode i, DawgNode j) {
 		if (distanceToRoot[i.getNodeId()] == distanceToRoot[j.getNodeId()]) {
 			for (DawgEdge e : i.edgesInto) {
 				for (DawgEdge f : j.edgesInto) {
 					if (e.getEdgeName() == f.getEdgeName()
 							&& !i.edgesInto.isEmpty() && !j.edgesInto.isEmpty()) {
-						changePointers(e.getFrom(), f.getFrom());
+						changePointers(nodes.get(e.getFrom()),
+								nodes.get(f.getFrom()));
 					}
 				}
 			}
 
-			for (DawgNode n : j.nodesInto) {
-					for (DawgEdge e : n.edgesOutOf) {
-						if (e.getTo().getNodeId() == j.getNodeId()
-								&& !i.equals(e.getFrom())) {
+			for (DawgEdge g : j.edgesInto) {
+				DawgNode n = nodes.get(g.getFrom());
+				for (DawgEdge e : n.edgesOutOf) {
+					if (e.getTo() == j.getNodeId() && !i.equals(e.getFrom())) {
 
-							e.setToId(i);
-							i.edgesInto.add(e);
-							j.edgesInto.clear();
-						}
+						e.setToId(i.getNodeId());
+						i.edgesInto.add(e);
+						j.edgesInto.clear();
 					}
+				}
 			}
 		}
 	}
@@ -143,8 +194,8 @@ public class Dawg {
 			leaves.add(nodes.get(i));
 		}
 		for (DawgEdge e : nodes.get(i).getEdges()) {
-			if (!search[e.getTo().getNodeId()]) {
-				markLeaves(nodes, e.getTo().getNodeId());
+			if (!search[e.getTo()]) {
+				markLeaves(nodes, e.getTo());
 			}
 		}
 	}
@@ -158,12 +209,13 @@ public class Dawg {
 			return;
 		}
 		if (node.contains(word.charAt(0))) {
-			addWord(word.substring(1), node.getNextNodeFromEdge(word.charAt(0)));
+			DawgNode next = nodes.get(node.getNextNodeFromEdge(word.charAt(0)));
+			addWord(word.substring(1), next);
 		} else {
 			DawgNode nextNode = new DawgNode(nodes.size());
 			nodes.add(nextNode);
 			node.addEdge(word.charAt(0), nextNode);
-			addWord(word.substring(1), node.getNextNodeFromEdge(word.charAt(0)));
+			addWord(word.substring(1), nextNode);
 		}
 	}
 
@@ -186,28 +238,17 @@ public class Dawg {
 	}
 
 	public static void main(String args[]) {
-		ArrayList<String> dictionary = new ArrayList<String>();
-		dictionary.clear();
-		int i = 0;
-		try (BufferedReader br = new BufferedReader(new FileReader(
-				"/Users/Ben/Desktop/Workspace/Scrabbot2k17/src/dict.txt"))) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				dictionary.add(line.toLowerCase());
-				i += 1;
-			}
-		} catch (Exception e) {
-			System.err.println("Poop");
-		}
-
-		Dawg d = new Dawg();
-		for (String word : dictionary) {
-			d.addWord(word);
-		}
+		Dawg d = new Dawg("dict.txt", 6);
 		d.reduceGraph();
 		d.printDawg();
-//		for (int j = 0; j < d.distanceToRoot.length; j++) {
-//			StdOut.println("Node " + j + " = " + d.distanceToRoot[j]);
-//		}
+		// print(d.root.edgesOutOf);
+		// print(d.containsWord("butt"));
+		// print(d.containsWord("and"));
+		// print(d.containsWord("pillage"));
+		// print(d.containsWord("yu"));
+		// print(d.containsWord("figjhl"));
+		// print(d.containsWord("fijjj"));
+		// print(d.containsWord("ramrod"));
+
 	}
 }
