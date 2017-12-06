@@ -72,7 +72,6 @@ public class Scrabbot {
 				if (rack.charAt(i) == rack.charAt(j)){
 					return true;
 				}
-				return false;
 			}
 		}
 		return false;
