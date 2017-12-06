@@ -1,9 +1,9 @@
 public class DawgEdge {
 	private char edgeName;
-	private DawgNode from;
-	private DawgNode to;
+	private int from;
+	private int to;
 
-	public DawgEdge(char letter, DawgNode start, DawgNode end) {
+	public DawgEdge(char letter, int start, int end) {
 		edgeName = letter;
 		from = start;
 		to = end;
@@ -17,19 +17,19 @@ public class DawgEdge {
 		this.edgeName = edgeName;
 	}
 
-	public DawgNode getFrom() {
+	public int getFrom() {
 		return from;
 	}
 
-	public void setFrom(DawgNode from) {
+	public void setFrom(int from) {
 		this.from = from;
 	}
 
-	public DawgNode getTo() {
+	public int getTo() {
 		return to;
 	}
 
-	public void setToId(DawgNode to) {
+	public void setToId(int to) {
 		if (to != from) {
 			this.to = to;
 		}
@@ -39,8 +39,7 @@ public class DawgEdge {
 	}
 
 	public String toString() {
-		return ("Edge " + edgeName + " from " + from.getNodeId() + " to " + to
-				.getNodeId());
+		return ("Edge " + edgeName + " from " + from + " to " + to );
 	}
 
 }
