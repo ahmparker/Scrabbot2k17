@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,11 +21,13 @@ public class Scrabbot {
 			'w', 'x', 'y', 'z' };
 
 	public Scrabbot() {
-
 		initializeGameDictionary();
 		initializeBag();
 		initializeletterValues();
 		fillWordValues();
+	}
+	
+	private void run(){
 		String rack = generateRandomRack();
 		StdOut.println("Random rack: " + rack.toUpperCase());
 		alreadySeen = new HashMap<String, Integer>();
@@ -253,8 +256,8 @@ public class Scrabbot {
 		dictionary = new ArrayList<String>(); // new list of strings as our
 												// dictionary
 		dictionary.clear(); // clear it
-		try (BufferedReader br = new BufferedReader(new FileReader(
-				"dict.txt"))) { // create
+		File f = new File("src/dict.txt");
+		try (BufferedReader br = new BufferedReader(new FileReader(f))) { // create
 																				// our
 																				// buffered
 																				// reader
