@@ -18,44 +18,46 @@ public class Scrabbot {
 	public String big = "";
 	public int bigS = 0;
 	public boolean duplicates = false;
+	public boolean dupBlanks = false;
 
-	public char[] alphabet = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
-			'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-			'w', 'x', 'y', 'z' };
+	public char[] alphabet = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+			's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
 
+	public static void print(Object s) {
+		StdOut.println(s);
+	}
 	public Scrabbot() {
 		initializeGameDictionary();
 		initializeBag();
 		initializeletterValues();
 		fillWordValues();
 	}
-	
-	private void run(){
+
+	private void run() {
 		String rack = generateRandomRack();
 		StdOut.println("Random rack: " + rack.toUpperCase());
 		alreadySeen = new HashMap<String, Integer>();
 		for (int i = rack.length(); i > 0; i--) {
-
-			if (letterRack.contains('_')) { //only if rack contains blank letter
-				for (int j = 0; j < alphabet.length; j++) { 
-					String temp_rack = rack.replace('_', alphabet[j]);
-					blank = alphabet[j];
-					// StdOut.println(temp_rack);
-					duplicates = hasDupes(rack);
-					permutation(temp_rack, i);
-					if (big.indexOf(blank) > 0 && duplicates == false) { //lazy assumption; if the modified blank char is used and there are no duplicate letters on the rack, then we can confirm we used the modified blank tile and remove its points 
-						bigS = bigS - getLetterValue(blank);
-					}
-					
-				}
-			}
-			duplicates = hasDupes(rack); //does the rack have duplicates?
+			duplicates = hasDupes(rack); // does the rack have duplicates?
 			permutation(rack, i);
 		}
-		StdOut.println(topScorer());
+		StdOut.println(big);
 	}
 
-	private void fillWordValues() { //sets the value for every word in the dictionary
+	private void runWithRack(String rack) {
+		rack = rack.toLowerCase();
+		StdOut.println("Testing rack: " + rack.toUpperCase());
+		alreadySeen = new HashMap<String, Integer>();
+		for (int i = rack.length(); i > 0; i--) {
+			duplicates = hasDupes(rack); // does the rack have duplicates?
+			permutation(rack, i);
+		}
+		StdOut.println(big);
+
+	}
+
+	private void fillWordValues() { // sets the value for every word in the
+									// dictionary
 		wordValues = new HashMap<String, Integer>();
 		for (String word : dictionary) {
 			int value = 0;
@@ -66,63 +68,80 @@ public class Scrabbot {
 		}
 	}
 
-	public boolean hasDupes(String rack){ //lets us know if a rack contains duplicate letters
-		for (int i = 0; i < rack.length(); i++){
-			for (int j = i+1; j < rack.length(); j++){
-				if (rack.charAt(i) == rack.charAt(j)){
+	public boolean hasDupes(String rack) { // lets us know if a rack contains
+											// duplicate letters
+		for (int i = 0; i < rack.length(); i++) {
+			for (int j = i + 1; j < rack.length(); j++) {
+				if (rack.charAt(i) == rack.charAt(j)) {
 					return true;
 				}
 			}
 		}
 		return false;
 	}
-	
-	private String topScorer() {
-		int max = 0;
-		String word = "";
-		for (String s : alreadySeen.keySet()) {
-			if (blank != '_') {
-				if (wordValues.get(s) > max) {
-					max = wordValues.get(s);
-					word = s;
-				}
-			} else {
-				if (wordValues.get(s) - letterValues.get(blank) > max) {
-					max = wordValues.get(s) - letterValues.get(blank);
-					word = s;
-				}
-			}
-		}
-		return word;
-	}
+
+	// private String topScorer() {
+	// int max = 0;
+	// String word = "";
+	// for (String s : alreadySeen.keySet()) {
+	// if (blank != '_') {
+	// if (wordValues.get(s) > max) {
+	// max = wordValues.get(s);
+	// word = s;
+	// }
+	// } else {
+	// if (wordValues.get(s) - letterValues.get(blank) > max) {
+	// max = wordValues.get(s) - letterValues.get(blank);
+	// word = s;
+	// }
+	// }
+	// }
+	// return word;
+	// }
 
 	public void permutation(String s, int length) {
 		permutation("", s, length);
 	}
 
-	private void permutation(String prefix, String s, int length) { //finds every permutation of all the letters in the rack
+	private void permutation(String prefix, String s, int length) { // finds
+																	// every
+																	// permutation
+																	// of all
+																	// the
+																	// letters
+																	// in the
+																	// rack
 		int n = s.length();
-		
-		
-		if (!alreadySeen.containsKey(prefix)) {
+		int possSub = 0;
+		//StdOut.println("Prefix: " + prefix + "\tS: " + s);
+		//if (!alreadySeen.containsKey(prefix)) {
 			if (dictionary.contains(prefix)) {
-				alreadySeen.put(prefix, prefix.hashCode());
-				if (getWordValue(prefix) > bigS){
+				if (getWordValue(prefix) > bigS) {
 					big = prefix;
 					bigS = getWordValue(prefix);
+
 				}
-				StdOut.println(prefix + "\t" + getWordValue(prefix)
-						+ "\tBlank: " + blank);
-			} 
-			else {
-				if (n > 0) {
-					for (int i = 0; i < n; i++)
-						permutation(prefix + s.charAt(i),
-								s.substring(0, i) + s.substring(i + 1, n),
-								length);
+				//StdOut.println(prefix + "\t" + getWordValue(prefix) + "\tBlank: " + blank);
+			//}
+		} else if (prefix.contains(String.valueOf('_')) && prefix.length()>1) {
+			//print("HERERERERERER");
+			for (int i = 0; i < alphabet.length; i++) {
+				String temp = prefix.replace('_', alphabet[i]);
+				if (dictionary.contains(temp)) {
+					if (getWordValue(temp) - getLetterValue(alphabet[i]) > bigS) {
+						big = temp;
+						bigS = getWordValue(temp) - getLetterValue(alphabet[i]);
+
+					}
+					StdOut.println(
+							prefix + "\t" + (getWordValue(temp) - getLetterValue(alphabet[i])) + "\tBlank: " + blank);
 				}
 			}
-		}
+		} else if (n > 0) {
+			for (int i = 0; i < n; i++)
+				permutation(prefix + s.charAt(i), s.substring(0, i) + s.substring(i + 1, n), length);
+	}
+			alreadySeen.put(prefix, prefix.hashCode());
 
 	}
 
@@ -151,10 +170,11 @@ public class Scrabbot {
 													// our "rack"
 		String view = "";
 		for (int i = 0; i < 7; i++) {
-			int randomIndex = (int) (Math.random() * (letterBag.size() - i)); 
-			letterRack.add(letterBag.get(randomIndex)); 
+			int randomIndex = (int) (Math.random() * (letterBag.size() - i));
+			letterRack.add(letterBag.get(randomIndex));
 			view += letterBag.get(randomIndex); // add the letter to our rack
-			letterBag.remove(randomIndex); // remove the chosen letter from the bag
+			letterBag.remove(randomIndex); // remove the chosen letter from the
+											// bag
 		}
 		return view; // return the string of chars that is our "rack"
 	}
@@ -245,7 +265,9 @@ public class Scrabbot {
 												// dictionary
 		dictionary.clear(); // clear it
 		File f = new File("src/dict.txt");
-		try (BufferedReader br = new BufferedReader(new FileReader(f))) { // create											// file
+		try (BufferedReader br = new BufferedReader(new FileReader(f))) { // create
+																			// //
+																			// file
 			String line;
 			while ((line = br.readLine()) != null) {
 				dictionary.add(line.toLowerCase()); // case doesn't matter in
@@ -268,6 +290,7 @@ public class Scrabbot {
 
 	public static void main(String[] args) {
 		Scrabbot s = new Scrabbot();
+		s.runWithRack("_AUDIEO");
 	}
 
 }
