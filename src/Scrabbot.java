@@ -114,35 +114,36 @@ public class Scrabbot {
 		int n = s.length();
 		int possSub = 0;
 		//StdOut.println("Prefix: " + prefix + "\tS: " + s);
-		//if (!alreadySeen.containsKey(prefix)) {
+		if (!alreadySeen.containsKey(prefix)) {
 			if (dictionary.contains(prefix)) {
+				alreadySeen.put(prefix, prefix.hashCode());
 				if (getWordValue(prefix) > bigS) {
 					big = prefix;
 					bigS = getWordValue(prefix);
 
 				}
-				//StdOut.println(prefix + "\t" + getWordValue(prefix) + "\tBlank: " + blank);
-			//}
-		} else if (prefix.contains(String.valueOf('_')) && prefix.length()>1) {
-			//print("HERERERERERER");
+				StdOut.println(prefix + "\t" + getWordValue(prefix));
+			}
+		}
+		if (prefix.contains(String.valueOf('_')) && prefix.length()>1 && !alreadySeen.containsKey(prefix)) {
 			for (int i = 0; i < alphabet.length; i++) {
 				String temp = prefix.replace('_', alphabet[i]);
+				alreadySeen.put(prefix, prefix.hashCode());
 				if (dictionary.contains(temp)) {
 					if (getWordValue(temp) - getLetterValue(alphabet[i]) > bigS) {
 						big = temp;
 						bigS = getWordValue(temp) - getLetterValue(alphabet[i]);
-
 					}
 					StdOut.println(
-							prefix + "\t" + (getWordValue(temp) - getLetterValue(alphabet[i])) + "\tBlank: " + blank);
+							prefix + "\t" + (getWordValue(temp) - getLetterValue(alphabet[i])));
+					break;
 				}
 			}
-		} else if (n > 0) {
+		}
+		if (n > 0) {
 			for (int i = 0; i < n; i++)
 				permutation(prefix + s.charAt(i), s.substring(0, i) + s.substring(i + 1, n), length);
 	}
-			alreadySeen.put(prefix, prefix.hashCode());
-
 	}
 
 	private void printBagState() { // prints out the number of each letter left
@@ -290,7 +291,7 @@ public class Scrabbot {
 
 	public static void main(String[] args) {
 		Scrabbot s = new Scrabbot();
-		s.runWithRack("_AUDIEO");
+		s.runWithRack("A_UDIEO");
 	}
 
 }
