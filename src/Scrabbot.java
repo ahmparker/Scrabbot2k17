@@ -19,6 +19,7 @@ public class Scrabbot {
 	public int bigS = 0;
 	public Trie t;
 	public ArrayList<String> allWords;
+	public String originalRack;
 
 	public char[] alphabet = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
 			'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
@@ -56,6 +57,7 @@ public class Scrabbot {
 	private void run() {
 		String rack = generateRandomRack();
 		rack = sortRack(rack);
+		originalRack = rack;
 		StdOut.println("Random rack: " + rack.toUpperCase());
 		nodeSearch(rack);
 		ArrayList<String> sorted = sortAllWordsByPoints();
@@ -72,7 +74,8 @@ public class Scrabbot {
 	 *            String of tiles provided by the user, used to return the list
 	 *            of words that can be made from these letters
 	 */
-	private void runWithRack(String rack) {
+	private String runWithRack(String rack) {
+		originalRack = rack;
 		rack = sortRack(rack);
 		StdOut.println("Testing rack: " + rack.toUpperCase());
 		nodeSearch(rack);
@@ -80,7 +83,7 @@ public class Scrabbot {
 		for (String s : sorted) {
 			print(s + "\t" + getWordValue(s));
 		}
-
+		return big;
 	}
 
 	/**
@@ -88,6 +91,7 @@ public class Scrabbot {
 	 * expensive permutation method
 	 */
 	private void runWithAllPermutations(String rack) {
+		originalRack = rack;
 		StdOut.println("Testing rack: " + rack.toUpperCase());
 		alreadySeen = new HashMap<String, Integer>();
 		for (int i = rack.length(); i > 0; i--) {
@@ -185,7 +189,7 @@ public class Scrabbot {
 	 *            String representing the rack of tiles
 	 */
 	private void nodeSearch(String str) {
-		nodeSearch(t.getNodes().get(0), str, "", '_');
+		nodeSearch(t.getNodes().get(0), str, "", '_', '_');
 	}
 
 	/**
@@ -202,23 +206,28 @@ public class Scrabbot {
 	 * @param blank
 	 *            char representing the blank tile, if it exists on this rack
 	 */
-	private void nodeSearch(TrieNode n, String str, String word, char blank) {
+	private void nodeSearch(TrieNode n, String str, String word, char blank1,
+			char blank2) {
+		print(word + "\t"+str);
 		// If the current node is a valid ending of a word, add the word to the
 		// list of all words, checking whether it is currently the highest
 		// scoring and whether there is a blank tile being used
 		if (n.isTerminal()) {
-			if (blank == '_') {
-				if (getWordValue(word) > getWordValue(big)) {
+			//if (blank1 == '_' && blank2 == '_') {
+			int possWordValue = getWordValue(word);
+			String tempWord = "";
+				for(char letter: word.toCharArray()){
+					if (!originalRack.contains(String.valueOf(letter))){
+						possWordValue -=getLetterValue(letter);
+						tempWord+='_';
+					}
+					tempWord+=letter;
+				}
+				if (possWordValue > getWordValue(big)) {
 					big = word;
 				}
-				allWords.add(word);
-			} else {
-				if (getWordValue(word) - getLetterValue(blank) > getWordValue(big)) {
-					big = word;
-				}
-				allWords.add(word.replaceFirst(String.valueOf(blank), "_"));
-			}
-
+				allWords.add(tempWord);
+				print("HERE");
 		}
 
 		// Fills an ArrayList with all possible branches to explore, based on
@@ -230,10 +239,11 @@ public class Scrabbot {
 				temp.add(e);
 			}
 		}
-
+		if (temp.isEmpty()) {
+			return;
+		}
 		// Prioritizes higher-scoring letters to check
 		temp = sortEdgeList(temp);
-
 		// Switches in the valid tiles to check if they are words, accounting
 		// for blank tiles
 		for (TrieEdge e : temp) {
@@ -242,16 +252,44 @@ public class Scrabbot {
 						t.getNodes().get(e.getTo()),
 						str.substring(0, str.indexOf(e.getEdgeName()))
 								+ str.substring(str.indexOf(e.getEdgeName()) + 1),
-						word + e.getEdgeName(), blank);
-			} catch (Exception f) {
-				nodeSearch(
-						t.getNodes().get(e.getTo()),
-						str.substring(0, str.indexOf("_"))
-								+ str.substring(str.indexOf("_") + 1),
-						word + e.getEdgeName(), e.getEdgeName());
-			}
+						word + e.getEdgeName(), blank1, blank2);
+			} catch (Exception k) {
+				if (str.contains(String.valueOf('_'))) {
+					nodeSearch(
+							t.getNodes().get(e.getTo()),
+							str.substring(0, str.indexOf("_"))
+									+ str.substring(str.indexOf("_") + 1), word
+									+ e.getEdgeName(), e.getEdgeName(), blank2);
+					if (str.indexOf('_') != str.lastIndexOf('_')) {
+						for (TrieEdge f : t.getNodes().get(e.getTo()).edgesOutOf) {
+							nodeSearch(
+									t.getNodes().get(e.getTo()),
+									str.substring(0, str.indexOf("_"))
+											+ str.substring(
+													str.indexOf("_") + 1,
+													str.lastIndexOf('_'))
+											+ str.substring(str
+													.lastIndexOf('_') + 1),
+									word + e.getEdgeName() + f.getEdgeName(),
+									e.getEdgeName(), f.getEdgeName());
+							nodeSearch(
+									t.getNodes().get(e.getTo()),
+									str.substring(0, str.indexOf("_"))
+											+ str.substring(
+													str.indexOf("_") + 1,
+													str.lastIndexOf('_'))
+											+ str.substring(str
+													.lastIndexOf('_') + 1),
+									f.getEdgeName()+word + e.getEdgeName(),
+									e.getEdgeName(), f.getEdgeName());
+						}
+					}
 
+				}
+			}
 		}
+		print("GERE");
+		return;
 	}
 
 	/**
@@ -529,9 +567,18 @@ public class Scrabbot {
 		}
 	}
 
+	// public void compareSpeeds(String rack){
+	// long initialTime = System.currentTimeMillis();
+	// runWithRack(rack);
+	// print((System.currentTimeMillis() - initialTime) *1000 );
+	// initialTime = Sys
+	// }
+
 	public static void main(String[] args) {
 		Scrabbot s = new Scrabbot("dict.txt");
-		s.run();
+		String biggest = s.runWithRack("swniu__");
+		print("The word worth the most points is: " + biggest + "\nPoints: "
+				+ s.getWordValue(biggest));
 	}
 
 }
