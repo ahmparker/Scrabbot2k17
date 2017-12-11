@@ -11,7 +11,7 @@ public class ScrabbotTest {
 	private Scrabbot bot;
 	@Before
 	public void setUp() throws Exception {
-		bot = new Scrabbot();
+		bot = new Scrabbot("dict.txt");
 	}
 	
 	@Test

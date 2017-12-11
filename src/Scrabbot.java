@@ -1,9 +1,7 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,9 +17,7 @@ public class Scrabbot {
 	public char blank = '_';
 	public String big = "aa";
 	public int bigS = 0;
-	public boolean duplicates = false;
-	public boolean dupBlanks = false;
-	public Dawg d;
+	public Trie t;
 	public ArrayList<String> allWords;
 
 	public char[] alphabet = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
@@ -35,38 +31,78 @@ public class Scrabbot {
 		StdOut.println(s);
 	}
 
-	public Scrabbot() {
-		d = new Dawg("dict.txt", 15);
-		initializeGameDictionary();
+	/**
+	 * Initializes Scrabbot with a dictionary from the file provided
+	 * 
+	 * @param filename
+	 *            String representing the filename of the lexicon Note: The Trie
+	 *            and dictionary are initialized with the max word length set to
+	 *            100, but this can be lowered to limit the length of words
+	 *            allowed
+	 */
+	public Scrabbot(String filename) {
+		t = new Trie(filename, 100);
+		initializeGameDictionary(filename, 100);
 		initializeBag();
 		initializeletterValues();
 		fillWordValues();
 		allWords = new ArrayList<String>();
 	}
 
+	/**
+	 * Runs the Scrabbot with a randomly generated rack of tiles, using the
+	 * efficient search method to find the highest scoring word possible
+	 */
 	private void run() {
 		String rack = generateRandomRack();
+		rack = sortRack(rack);
 		StdOut.println("Random rack: " + rack.toUpperCase());
-		alreadySeen = new HashMap<String, Integer>();
-		for (int i = rack.length(); i > 0; i--) {
-			duplicates = hasDupes(rack); // does the rack have duplicates?
-			permutation(rack, i);
+		nodeSearch(rack);
+		ArrayList<String> sorted = sortAllWordsByPoints();
+		for (String s : sorted) {
+			print(s + "\t" + getWordValue(s));
 		}
-		StdOut.println(big);
 	}
 
+	/**
+	 * Runs the Scrabbot with a user generated rack of tiles, using the
+	 * efficient search method to find the highest scoring word possible
+	 * 
+	 * @param rack
+	 *            String of tiles provided by the user, used to return the list
+	 *            of words that can be made from these letters
+	 */
 	private void runWithRack(String rack) {
-		rack = rack.toLowerCase();
+		rack = sortRack(rack);
+		StdOut.println("Testing rack: " + rack.toUpperCase());
+		nodeSearch(rack);
+		ArrayList<String> sorted = sortAllWordsByPoints();
+		for (String s : sorted) {
+			print(s + "\t" + getWordValue(s));
+		}
+
+	}
+
+	/**
+	 * Runs the Scrabbot with a randomly generated rack of tiles, using the
+	 * expensive permutation method
+	 */
+	private void runWithAllPermutations(String rack) {
 		StdOut.println("Testing rack: " + rack.toUpperCase());
 		alreadySeen = new HashMap<String, Integer>();
 		for (int i = rack.length(); i > 0; i--) {
-			duplicates = hasDupes(rack); // does the rack have duplicates?
-			permutation(rack, i);
+			permutation(rack);
 		}
 		StdOut.println(big);
-
 	}
 
+	/**
+	 * Sorts the rack of tiles by point value of the tiles
+	 * 
+	 * @param rack
+	 *            String of tiles to be sorted
+	 * @return String of sorted letters
+	 */
 	private String sortRack(String rack) {
 		String str = "";
 		for (int i = 0; i < scrabbleAlphabet.length; i++) {
@@ -79,10 +115,17 @@ public class Scrabbot {
 		return str;
 	}
 
-	private ArrayList<DawgEdge> sortList(ArrayList<DawgEdge> edges) {
-		ArrayList<DawgEdge> temp = new ArrayList<DawgEdge>();
+	/**
+	 * Sorts a list of TrieEdges by point value of the letters of the edge names
+	 * 
+	 * @param edges
+	 *            ArrayList of TrieEdges to be sorted
+	 * @return ArrayList of sorted TrieEdges
+	 */
+	private ArrayList<TrieEdge> sortEdgeList(ArrayList<TrieEdge> edges) {
+		ArrayList<TrieEdge> temp = new ArrayList<TrieEdge>();
 		for (int i = 0; i < scrabbleAlphabet.length; i++) {
-			for (DawgEdge e : edges) {
+			for (TrieEdge e : edges) {
 				if (e.getEdgeName() == scrabbleAlphabet[i]) {
 					temp.add(e);
 				}
@@ -91,6 +134,11 @@ public class Scrabbot {
 		return temp;
 	}
 
+	/**
+	 * Sorts the final list of all possible words by length
+	 * 
+	 * @return ArrayList of sorted words, by length
+	 */
 	private ArrayList<String> sortAllWordsByLength() {
 		ArrayList<String> t = new ArrayList<String>();
 		for (int i = 0; i < allWords.size(); i++) {
@@ -100,53 +148,117 @@ public class Scrabbot {
 					max = s;
 				}
 			}
-			t.add(max);
+			if (!max.equals("")) {
+				t.add(max);
+			}
 		}
 		return t;
 	}
 
-	private void findEfficiently() {
-		String rack = generateRandomRack();
-		rack = sortRack(rack);
-		StdOut.println("Random rack: " + rack.toUpperCase());
-		nodeSearch(rack);
-		ArrayList<String> sorted = sortAllWordsByLength();
-		for(String s: sorted){
-			print(s);
+	/**
+	 * Sorts the final list of all possible words by point value of the word
+	 * 
+	 * @return ArrayList of sorted words, by point value
+	 */
+	private ArrayList<String> sortAllWordsByPoints() {
+		ArrayList<String> t = new ArrayList<String>();
+		for (int i = 0; i < allWords.size(); i++) {
+			String max = "";
+			int points = 0;
+			for (String s : allWords) {
+				if (getWordValue(s) > points && !t.contains(s)) {
+					max = s;
+					points = getWordValue(s);
+				}
+			}
+			if (!max.equals("")) {
+				t.add(max);
+			}
 		}
+		return t;
 	}
 
+	/**
+	 * Allows the nodeSearch function to be called with one parameter
+	 * 
+	 * @param str
+	 *            String representing the rack of tiles
+	 */
 	private void nodeSearch(String str) {
-		nodeSearch(d.getNodes().get(0), str, "");
+		nodeSearch(t.getNodes().get(0), str, "", '_');
 	}
 
-	private void nodeSearch(DawgNode n, String str, String word) {
-		// print(str + "\t" + word + "\n" + n);
+	/**
+	 * Recursively finds all possible words that exist in the Trie
+	 * 
+	 * @param n
+	 *            TrieNode, the current TrieNode being searched for edges
+	 * @param str
+	 *            String representing the tiles "still on the rack" that haven't
+	 *            been placed onto the finished word
+	 * @param word
+	 *            String representing the tiles in the finished word, or the
+	 *            path that has been taken down the branch thus far
+	 * @param blank
+	 *            char representing the blank tile, if it exists on this rack
+	 */
+	private void nodeSearch(TrieNode n, String str, String word, char blank) {
+		// If the current node is a valid ending of a word, add the word to the
+		// list of all words, checking whether it is currently the highest
+		// scoring and whether there is a blank tile being used
 		if (n.isTerminal()) {
-			if (getWordValue(word) > getWordValue(big)) {
-				big = word;
+			if (blank == '_') {
+				if (getWordValue(word) > getWordValue(big)) {
+					big = word;
+				}
+				allWords.add(word);
+			} else {
+				if (getWordValue(word) - getLetterValue(blank) > getWordValue(big)) {
+					big = word;
+				}
+				allWords.add(word.replaceFirst(String.valueOf(blank), "_"));
 			}
-			allWords.add(word);
+
 		}
-		ArrayList<DawgEdge> t = new ArrayList<DawgEdge>();
-		for (DawgEdge e : n.edgesOutOf) {
-			if (str.contains(String.valueOf(e.getEdgeName()))) {
-				t.add(e);
+
+		// Fills an ArrayList with all possible branches to explore, based on
+		// the remaining letters on the rack
+		ArrayList<TrieEdge> temp = new ArrayList<TrieEdge>();
+		for (TrieEdge e : n.edgesOutOf) {
+			if (str.contains(String.valueOf(e.getEdgeName()))
+					|| str.contains(String.valueOf('_'))) {
+				temp.add(e);
 			}
 		}
-		t = sortList(t);
-		// print(t);
-		for (DawgEdge e : t) {
-			nodeSearch(
-					d.getNodes().get(e.getTo()),
-					str.substring(0, str.indexOf(e.getEdgeName()))
-							+ str.substring(str.indexOf(e.getEdgeName()) + 1),
-					word + e.getEdgeName());
+
+		// Prioritizes higher-scoring letters to check
+		temp = sortEdgeList(temp);
+
+		// Switches in the valid tiles to check if they are words, accounting
+		// for blank tiles
+		for (TrieEdge e : temp) {
+			try {
+				nodeSearch(
+						t.getNodes().get(e.getTo()),
+						str.substring(0, str.indexOf(e.getEdgeName()))
+								+ str.substring(str.indexOf(e.getEdgeName()) + 1),
+						word + e.getEdgeName(), blank);
+			} catch (Exception f) {
+				nodeSearch(
+						t.getNodes().get(e.getTo()),
+						str.substring(0, str.indexOf("_"))
+								+ str.substring(str.indexOf("_") + 1),
+						word + e.getEdgeName(), e.getEdgeName());
+			}
+
 		}
 	}
 
-	private void fillWordValues() { // sets the value for every word in the
-									// dictionary
+	/**
+	 * Fills the lookup table of word values, based on the lexicon provided Note
+	 * that a 50-point bonus is provided for 7 letter words
+	 */
+	private void fillWordValues() {
 		wordValues = new HashMap<String, Integer>();
 		for (String word : dictionary) {
 			int value = 0;
@@ -160,52 +272,34 @@ public class Scrabbot {
 		}
 	}
 
-	public boolean hasDupes(String rack) { // lets us know if a rack contains
-											// duplicate letters
-		for (int i = 0; i < rack.length(); i++) {
-			for (int j = i + 1; j < rack.length(); j++) {
-				if (rack.charAt(i) == rack.charAt(j)) {
-					return true;
-				}
-			}
-		}
-		return false;
+	/**
+	 * Allows the recursive function to be called with only one parameter
+	 * 
+	 * @param s
+	 *            String representing the set of tiles to be permuted
+	 */
+	public void permutation(String s) {
+		permutation("", s);
 	}
 
-	// private String topScorer() {
-	// int max = 0;
-	// String word = "";
-	// for (String s : alreadySeen.keySet()) {
-	// if (blank != '_') {
-	// if (wordValues.get(s) > max) {
-	// max = wordValues.get(s);
-	// word = s;
-	// }
-	// } else {
-	// if (wordValues.get(s) - letterValues.get(blank) > max) {
-	// max = wordValues.get(s) - letterValues.get(blank);
-	// word = s;
-	// }
-	// }
-	// }
-	// return word;
-	// }
-
-	public void permutation(String s, int length) {
-		permutation("", s, length);
-	}
-
-	private void permutation(String prefix, String s, int length) { // finds
-																	// every
-																	// permutation
-																	// of all
-																	// the
-																	// letters
-																	// in the
-																	// rack
+	/**
+	 * Recursively searches all possible permutations of all lengths greater
+	 * than 2 to see if they are valid words, then marks the highest scoring
+	 * word
+	 * 
+	 * @param prefix
+	 *            String representing the current substring of the permutation
+	 *            being considered
+	 * @param s
+	 *            String representing the substring of the original permutation
+	 *            not being considered
+	 */
+	private void permutation(String prefix, String s) {
 		int n = s.length();
-		int possSub = 0;
-		// StdOut.println("Prefix: " + prefix + "\tS: " + s);
+
+		// Ignoring substrings of permutations that have already been
+		// considered, checks whether the current permutation is a word, and
+		// then whether is is the highest scoring word thus far
 		if (!alreadySeen.containsKey(prefix)) {
 			if (dictionary.contains(prefix)) {
 				alreadySeen.put(prefix, prefix.hashCode());
@@ -217,6 +311,9 @@ public class Scrabbot {
 				StdOut.println(prefix + "\t" + getWordValue(prefix));
 			}
 		}
+
+		// Repeats the above case, in the situation that the word has a blank
+		// tile
 		if (prefix.contains(String.valueOf('_')) && prefix.length() > 1
 				&& !alreadySeen.containsKey(prefix)) {
 			for (int i = 0; i < alphabet.length; i++) {
@@ -234,15 +331,21 @@ public class Scrabbot {
 				}
 			}
 		}
+
+		// Creates a new permutation, so long as the new word is longer than 2
+		// letters
 		if (n > 0) {
 			for (int i = 0; i < n; i++)
 				permutation(prefix + s.charAt(i),
-						s.substring(0, i) + s.substring(i + 1, n), length);
+						s.substring(0, i) + s.substring(i + 1, n));
 		}
 	}
 
-	private void printBagState() { // prints out the number of each letter left
-									// inside the bag
+	/**
+	 * Prints the current bag state, how many total tiles there are and how many
+	 * of each tile is left
+	 */
+	private void printBagState() {
 		StdOut.println("Number of Tiles in the bag: " + letterBag.size());
 		StdOut.println("Letter count: ");
 		char temp = '_';
@@ -260,24 +363,29 @@ public class Scrabbot {
 		}
 	}
 
-	private String generateRandomRack() { // creates a random rack of letters
-											// for our bot
-		letterRack = new ArrayList<Character>(); // create our list of chars as
-													// our "rack"
-		String view = "";
+	/**
+	 * Generates a random rack of letters, pulling the tiles out of the bag so
+	 * they cannot be reused
+	 * 
+	 * @return String of 7 random tiles pulled from the letter bag
+	 */
+	private String generateRandomRack() {
+		letterRack = new ArrayList<Character>();
+		String rack = "";
+
+		// Pulls random chars from the letter bag, removing them each time they
+		// are pulled
 		for (int i = 0; i < 7; i++) {
 			int randomIndex = (int) (Math.random() * (letterBag.size() - i));
 			letterRack.add(letterBag.get(randomIndex));
-			view += letterBag.get(randomIndex); // add the letter to our rack
-			letterBag.remove(randomIndex); // remove the chosen letter from the
-											// bag
+			rack += letterBag.get(randomIndex);
+			letterBag.remove(randomIndex);
 		}
-		return view; // return the string of chars that is our "rack"
+		return rack;
 	}
 
-	private void initializeletterValues() { // create our hashmap connecting
-											// each letter to the amount of
-											// points it's worth
+	/** Creates a hashmap to determine the value of each letter */
+	private void initializeletterValues() {
 		letterValues = new HashMap<Character, Integer>();
 		letterValues.clear();
 		letterValues.put('a', 1);
@@ -309,15 +417,22 @@ public class Scrabbot {
 		letterValues.put('_', 0);
 	}
 
-	public void initializeBag() { // add all the letters to the bag
+	/**
+	 * Creates a "bag" of letters with the correct distribution of letters for
+	 * Scrabble
+	 */
+	public void initializeBag() {
 		letterBag = new ArrayList<Character>();
-		letterBag.clear(); // clear everything
-		letterBag.add('k'); // these letters only get added once
+		letterBag.clear();
+		letterBag.add('k');
 		letterBag.add('j');
 		letterBag.add('x');
 		letterBag.add('q');
 		letterBag.add('z');
-		for (int i = 0; i < 12; i++) {// these letters get put in 2 times
+
+		// After adding all the letters that only exist once in the bag, add the
+		// correct distribution of remaining letters
+		for (int i = 0; i < 12; i++) {
 			if (i < 2) {
 				letterBag.add('b');
 				letterBag.add('c');
@@ -330,63 +445,93 @@ public class Scrabbot {
 				letterBag.add('y');
 				letterBag.add('_');
 			}
-			if (i < 3) { // 3 g's
+			if (i < 3) {
 				letterBag.add('g');
 			}
-			if (i < 4) { // these letters get put in 4 times
+			if (i < 4) {
 				letterBag.add('l');
 				letterBag.add('s');
 				letterBag.add('u');
 				letterBag.add('d');
 			}
-			if (i < 6) { // these ones in 6
+			if (i < 6) {
 				letterBag.add('n');
 				letterBag.add('r');
 				letterBag.add('t');
 			}
-			if (i < 8) { // 8 times
+			if (i < 8) {
 				letterBag.add('o');
 			}
-			if (i < 9) {// and these ones 9 times
+			if (i < 9) {
 				letterBag.add('a');
 				letterBag.add('i');
 			}
-			letterBag.add('e'); // 12 e's
+			letterBag.add('e');
 
 		}
 	}
 
-	public void initializeGameDictionary() {
-		dictionary = new ArrayList<String>(); // new list of strings as our
-												// dictionary
-		dictionary.clear(); // clear it
-		File f = new File("src/dict.txt");
-		try (BufferedReader br = new BufferedReader(new FileReader(f))) { // create
-																			// //
-																			// file
+	/**
+	 * Initializes the game dictionary based on the lexicon provided in the .txt
+	 * file
+	 * 
+	 * @param filename
+	 *            String representing the filename of the lexicon. Note: The
+	 *            dictionary is initialized with the max word length set to 100,
+	 *            but this can be lowered to limit the length of words allowed
+	 */
+	public void initializeGameDictionary(String filename, int maxLength) {
+		dictionary = new ArrayList<String>();
+		dictionary.clear();
+		File f = new File("src/" + filename);
+		try (BufferedReader br = new BufferedReader(new FileReader(f))) {
 			String line;
-			while ((line = br.readLine()) != null) {
-				dictionary.add(line.toLowerCase()); // case doesn't matter in
-													// scrabble so we default to
-													// lowercase
+			while ((line = br.readLine()) != null && line.length() < maxLength) {
+				dictionary.add(line.toLowerCase());
 			}
 		} catch (Exception e) {
-			// System.err.println("Poop"); //error has occurred
+			System.err.println("File not found");
 		}
 	}
 
-	public int getLetterValue(char letter) { // returns the points of a letter
-												// from our letterValues map
-		return letterValues.get(letter);
+	/**
+	 * Returns the letter value based on the pre-defined hashmap
+	 * 
+	 * @return int letter value of a given char
+	 */
+	public int getLetterValue(char letter) {
+		try {
+			return letterValues.get(letter);
+		} catch (Exception e) {
+			System.err.println(letter + " is not a tile in Scrabble");
+		}
+		return 0;
 	}
 
+	/**
+	 * Returns the word value based on the pre-defined hashmap If there is a
+	 * blank tile in the word, a new word value is determined
+	 * 
+	 * @return int word value of a given string
+	 */
 	public int getWordValue(String word) {
-		return wordValues.get(word);
+		try {
+			return wordValues.get(word);
+		} catch (Exception e) {
+			int v = 0;
+			for (char l : word.toCharArray()) {
+				v += getLetterValue(l);
+			}
+			if (word.length() == 7) {
+				v += 50;
+			}
+			return v;
+		}
 	}
 
 	public static void main(String[] args) {
-		Scrabbot s = new Scrabbot();
-		s.findEfficiently();
+		Scrabbot s = new Scrabbot("dict.txt");
+		s.run();
 	}
 
 }
