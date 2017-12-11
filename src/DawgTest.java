@@ -4,7 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class DawgTest {
-	Dawg d = new Dawg("testdict.txt", 8);
+	Dawg d = new Dawg("dict.txt", 8);
 
 	@Before
 	public void setUp() throws Exception {
@@ -12,7 +12,9 @@ public class DawgTest {
 
 	@Test
 	public void testContainsWordString() {
-		for (String word : d.dictionary) {
+		//d.printDawg();
+		for (String word : d.getDictionary()) {
+			StdOut.println(d.getDictionary().indexOf(word)/d.getDictionary().size() + " percent done");
 			assertTrue(d.containsWord(word));
 		}
 	}

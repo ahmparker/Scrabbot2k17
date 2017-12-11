@@ -1,13 +1,44 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class DawgNode {
 	public String nodesOutOf;
 	public ArrayList<DawgEdge> edgesOutOf;
 	public ArrayList<DawgEdge> edgesInto;
 	public char[] edgeLetters;
-
+	public int distanceFromRoot;
+	
 	public char[] getEdgeLetters() {
 		return edgeLetters;
+	}
+	
+	
+//	public String getSortedEdgeLetters(){
+//		//Arrays.sort(edgeLetters);
+//		for (int i = 0; i < edgeLetters.length; i++) {
+//			StdOut.println(edgeLetters[i]);
+//		}
+//	}
+	
+	public int hashCode(){
+		String str = "EdgeIn: ";
+		for(DawgEdge e: edgesInto){
+			str += e.getEdgeName();
+		}
+		str+=" EdgeOut: ";
+		for(DawgEdge e: edgesOutOf){
+			str += e.getEdgeName();
+		}
+		str+=" IsTerminal: ";
+		if(isTerminal()){
+			str+="Y";
+		}
+		else{
+			str+="N";
+		}
+		str+=" RootDist: "+distanceFromRoot;
+		//StdOut.println(str);
+		return str.hashCode();
 	}
 
 	public void setEdgeLetters(char edgeLetter) {
@@ -28,6 +59,7 @@ public class DawgNode {
 		edgeLetters = new char[27];
 		terminal = false;
 		nodeId = id;
+		distanceFromRoot = 0;
 	}
 
 	public ArrayList<DawgEdge> getEdgesOutOf() {
@@ -60,7 +92,9 @@ public class DawgNode {
 			nextNode.edgesInto.add(new DawgEdge(edgeLetter, nodeId,
 					nextNode.nodeId));
 			edgeLetters[index] = edgeLetter;
+			nextNode.distanceFromRoot=distanceFromRoot+1;
 		}
+		
 
 	}
 

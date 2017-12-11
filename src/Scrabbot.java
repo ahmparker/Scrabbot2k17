@@ -1,7 +1,9 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,22 +17,31 @@ public class Scrabbot {
 	public ArrayList<Character> letterRack;
 	public HashMap<String, Integer> alreadySeen;
 	public char blank = '_';
-	public String big = "";
+	public String big = "aa";
 	public int bigS = 0;
 	public boolean duplicates = false;
 	public boolean dupBlanks = false;
+	public Dawg d;
+	public ArrayList<String> allWords;
 
-	public char[] alphabet = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
-			's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+	public char[] alphabet = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
+			'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+			'w', 'x', 'y', 'z' };
+	public char[] scrabbleAlphabet = { 'q', 'z', 'j', 'x', 'k', 'f', 'h', 'v',
+			'w', 'y', 'b', 'c', 'm', 'p', 'd', 'g', 'a', 'e', 'i', 'l', 'n',
+			'o', 'r', 's', 't', 'u', '_' };
 
 	public static void print(Object s) {
 		StdOut.println(s);
 	}
+
 	public Scrabbot() {
+		d = new Dawg("dict.txt", 15);
 		initializeGameDictionary();
 		initializeBag();
 		initializeletterValues();
 		fillWordValues();
+		allWords = new ArrayList<String>();
 	}
 
 	private void run() {
@@ -56,6 +67,84 @@ public class Scrabbot {
 
 	}
 
+	private String sortRack(String rack) {
+		String str = "";
+		for (int i = 0; i < scrabbleAlphabet.length; i++) {
+			for (char l : rack.toLowerCase().toCharArray()) {
+				if (l == scrabbleAlphabet[i]) {
+					str += l;
+				}
+			}
+		}
+		return str;
+	}
+
+	private ArrayList<DawgEdge> sortList(ArrayList<DawgEdge> edges) {
+		ArrayList<DawgEdge> temp = new ArrayList<DawgEdge>();
+		for (int i = 0; i < scrabbleAlphabet.length; i++) {
+			for (DawgEdge e : edges) {
+				if (e.getEdgeName() == scrabbleAlphabet[i]) {
+					temp.add(e);
+				}
+			}
+		}
+		return temp;
+	}
+
+	private ArrayList<String> sortAllWordsByLength() {
+		ArrayList<String> t = new ArrayList<String>();
+		for (int i = 0; i < allWords.size(); i++) {
+			String max = "";
+			for (String s : allWords) {
+				if (s.length() > max.length() && !t.contains(s)) {
+					max = s;
+				}
+			}
+			t.add(max);
+		}
+		return t;
+	}
+
+	private void findEfficiently() {
+		String rack = generateRandomRack();
+		rack = sortRack(rack);
+		StdOut.println("Random rack: " + rack.toUpperCase());
+		nodeSearch(rack);
+		ArrayList<String> sorted = sortAllWordsByLength();
+		for(String s: sorted){
+			print(s);
+		}
+	}
+
+	private void nodeSearch(String str) {
+		nodeSearch(d.getNodes().get(0), str, "");
+	}
+
+	private void nodeSearch(DawgNode n, String str, String word) {
+		// print(str + "\t" + word + "\n" + n);
+		if (n.isTerminal()) {
+			if (getWordValue(word) > getWordValue(big)) {
+				big = word;
+			}
+			allWords.add(word);
+		}
+		ArrayList<DawgEdge> t = new ArrayList<DawgEdge>();
+		for (DawgEdge e : n.edgesOutOf) {
+			if (str.contains(String.valueOf(e.getEdgeName()))) {
+				t.add(e);
+			}
+		}
+		t = sortList(t);
+		// print(t);
+		for (DawgEdge e : t) {
+			nodeSearch(
+					d.getNodes().get(e.getTo()),
+					str.substring(0, str.indexOf(e.getEdgeName()))
+							+ str.substring(str.indexOf(e.getEdgeName()) + 1),
+					word + e.getEdgeName());
+		}
+	}
+
 	private void fillWordValues() { // sets the value for every word in the
 									// dictionary
 		wordValues = new HashMap<String, Integer>();
@@ -63,6 +152,9 @@ public class Scrabbot {
 			int value = 0;
 			for (char letter : word.toCharArray()) {
 				value += getLetterValue(letter);
+			}
+			if (word.length() == 7) {
+				value += 50;
 			}
 			wordValues.put(word, value);
 		}
@@ -113,7 +205,7 @@ public class Scrabbot {
 																	// rack
 		int n = s.length();
 		int possSub = 0;
-		//StdOut.println("Prefix: " + prefix + "\tS: " + s);
+		// StdOut.println("Prefix: " + prefix + "\tS: " + s);
 		if (!alreadySeen.containsKey(prefix)) {
 			if (dictionary.contains(prefix)) {
 				alreadySeen.put(prefix, prefix.hashCode());
@@ -125,7 +217,8 @@ public class Scrabbot {
 				StdOut.println(prefix + "\t" + getWordValue(prefix));
 			}
 		}
-		if (prefix.contains(String.valueOf('_')) && prefix.length()>1 && !alreadySeen.containsKey(prefix)) {
+		if (prefix.contains(String.valueOf('_')) && prefix.length() > 1
+				&& !alreadySeen.containsKey(prefix)) {
 			for (int i = 0; i < alphabet.length; i++) {
 				String temp = prefix.replace('_', alphabet[i]);
 				alreadySeen.put(prefix, prefix.hashCode());
@@ -134,16 +227,18 @@ public class Scrabbot {
 						big = temp;
 						bigS = getWordValue(temp) - getLetterValue(alphabet[i]);
 					}
-					StdOut.println(
-							prefix + "\t" + (getWordValue(temp) - getLetterValue(alphabet[i])));
+					StdOut.println(prefix
+							+ "\t"
+							+ (getWordValue(temp) - getLetterValue(alphabet[i])));
 					break;
 				}
 			}
 		}
 		if (n > 0) {
 			for (int i = 0; i < n; i++)
-				permutation(prefix + s.charAt(i), s.substring(0, i) + s.substring(i + 1, n), length);
-	}
+				permutation(prefix + s.charAt(i),
+						s.substring(0, i) + s.substring(i + 1, n), length);
+		}
 	}
 
 	private void printBagState() { // prints out the number of each letter left
@@ -291,7 +386,7 @@ public class Scrabbot {
 
 	public static void main(String[] args) {
 		Scrabbot s = new Scrabbot();
-		s.runWithRack("A_UDIEO");
+		s.findEfficiently();
 	}
 
 }

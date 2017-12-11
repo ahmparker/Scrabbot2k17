@@ -1,3 +1,4 @@
+art
 car
 cars
 cat
@@ -9,3 +10,5 @@ ear
 ears
 eat
 eats
+fancy
+flip
